@@ -1194,12 +1194,21 @@ function buildForm(tab){
       </div>
       <div class="pb">
         <label>📸 Foto del Producto / Novedad</label>
+        <!-- Input principal (reemplaza fotos) -->
         <input type="file" id="${tab}-f2" accept="image/*" multiple>
+        <!-- Input secundario (agrega fotos sin reemplazar) -->
+        <input type="file" id="${tab}-f2add" accept="image/*" multiple style="display:none;" onchange="addF2uPhotos('${tab}',this)">
+        <input type="file" id="${tab}-f2add1" accept="image/*" capture="environment" style="display:none;" onchange="addF2uPhotos('${tab}',this)">
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button class="pbtn" onclick="document.getElementById('${tab}-f2').removeAttribute('capture');document.getElementById('${tab}-f2').click();setTimeout(()=>{},500)" style="flex:1;"><span class="ic">🖼️</span> Galería</button>
           <button class="pbtn" onclick="(()=>{const i=document.getElementById('${tab}-f2');i.removeAttribute('multiple');i.setAttribute('capture','environment');i.click();setTimeout(()=>{i.setAttribute('multiple','');i.removeAttribute('capture');},1000)})()" style="flex:1;background:#0e7490;"><span class="ic">📷</span> Tomar Foto</button>
         </div>
+        <!-- Tira de previews con ⭐ principal y botones añadir más -->
         <div class="pp" id="${tab}-p2"></div>
+        <div id="${tab}-f2-addbtns" style="display:none;margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="pbtn" onclick="document.getElementById('${tab}-f2add').click()" style="flex:1;background:#0369a1;font-size:.78rem;padding:6px 8px;"><span class="ic">➕</span> Añadir desde Galería</button>
+          <button class="pbtn" onclick="document.getElementById('${tab}-f2add1').click()" style="flex:1;background:#0369a1;font-size:.78rem;padding:6px 8px;"><span class="ic">📷</span> Añadir Foto</button>
+        </div>
       </div>
     </div>
     <div class="fg">
@@ -1604,23 +1613,29 @@ function procF2(tab,jd){
 function renderF2Preview(tab){
   const prev=document.getElementById(tab+'-p2');
   if(!prev) return;
-  if(!f2u.length){prev.innerHTML='';return;}
-  let html='<div class="foto-strip">';
+  const addBtns=document.getElementById(tab+'-f2-addbtns');
+  if(!f2u.length){
+    prev.innerHTML='';
+    if(addBtns) addBtns.style.display='none';
+    return;
+  }
+  let h='<div class="foto-strip">';
   f2u.forEach((src,i)=>{
-    const isPrinc=i===0; // índice 0 es siempre la principal
-    html+=`<div class="foto-thumb${isPrinc?' principal':''}" id="ft-${tab}-${i}">
-      <img src="${src}" onclick="openGalLB(${i},'form-${tab}')" title="${isPrinc?'⭐ Foto principal':'Click para ver'}">
-      <button class="star-btn" onclick="setF2Principal(${i},'${tab}')" title="Establecer como principal">⭐</button>
+    const isPrinc=i===0;
+    h+=`<div class="foto-thumb${isPrinc?' principal':''}" id="ft-${tab}-${i}">
+      <img src="${src}" onclick="openGalLB(${i},'form-${tab}')" title="${isPrinc?'⭐ Foto principal — click para ver':'Click para ver galería'}" style="height:${isPrinc?72:58}px;">
+      <button class="star-btn" onclick="setF2Principal(${i},'${tab}')" title="${isPrinc?'Ya es principal':'Establecer como principal'}" style="${isPrinc?'background:var(--rojo);':''}">⭐</button>
       <button class="del-btn" onclick="delF2(${i},'${tab}')" title="Eliminar foto">✕</button>
     </div>`;
   });
-  html+='</div>';
-  prev.innerHTML=html;
+  h+=`<div style="display:flex;align-items:center;font-size:.68rem;color:#666;padding:4px 2px;">${f2u.length} foto(s)</div>`;
+  h+='</div>';
+  prev.innerHTML=h;
+  if(addBtns) addBtns.style.display='flex';
 }
 
 function setF2Principal(idx,tab){
-  // Mueve la foto al índice 0
-  if(idx===0) return;
+  if(idx===0){showT('⭐ Ya es la foto principal');return;}
   const img=f2u.splice(idx,1)[0];
   f2u.unshift(img);
   renderF2Preview(tab);
@@ -1630,6 +1645,35 @@ function setF2Principal(idx,tab){
 function delF2(idx,tab){
   f2u.splice(idx,1);
   renderF2Preview(tab);
+  showT('🗑️ Foto eliminada');
+}
+
+// Añadir más fotos al formulario sin reemplazar las existentes
+function addF2uPhotos(tab,inp){
+  const files=Array.from(inp.files);
+  if(!files.length) return;
+  // Reutilizamos la misma pipeline de crop que nextF2
+  const extra={pend:files,idx:0,tab,file:null};
+  function processNext(){
+    if(extra.idx>=extra.pend.length){inp.value='';renderF2Preview(tab);showT(`📷 ${files.length} foto(s) añadida(s)`);return;}
+    const file=extra.pend[extra.idx];
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const maxH=800;const ratio=Math.min(1,maxH/img.height);
+        const cv=document.createElement('canvas');
+        cv.width=Math.round(img.width*ratio);cv.height=Math.round(img.height*ratio);
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        f2u.push(cv.toDataURL('image/jpeg',.82));
+        extra.idx++;
+        processNext();
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  processNext();
 }
 
 // Gallery lightbox (usado en registros guardados)
