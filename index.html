@@ -1963,7 +1963,6 @@ function mkRow(rec,ean,ei,rn,tabKey){
       const isPrinc=fi===0;
       return`<div class="foto-thumb${isPrinc?' principal':''}">
         <img src="${src}" style="height:${isPrinc?70:55}px;cursor:pointer;" onclick="openGalLB(${fi},'rec-${rId}')" title="${isPrinc?'⭐ Principal — click para ver':'Click para ver galería'}">
-        <button class="star-btn" onclick="setRecPrincipal('${tKey2}','${rId}',${fi})" title="${isPrinc?'Ya es principal':'Establecer como principal'}" style="${isPrinc?'background:var(--rojo);':''}">⭐</button>
       </div>`;
     }).join('')+'</div>';
   }
@@ -2016,7 +2015,6 @@ function mkRowCopy(rec, ean, ei, rn){
       const isPrinc=fi===0;
       return`<div class="foto-thumb${isPrinc?' principal':''}">
         <img src="${src}" style="height:${isPrinc?70:55}px;cursor:pointer;" onclick="openGalLB(${fi},'rec-${rId2}')" title="${isPrinc?'⭐ Principal':'Ver galería'}">
-        <button class="star-btn" onclick="setRecPrincipal('rt','${rId2}',${fi})" title="${isPrinc?'Ya es principal':'Establecer como principal'}" style="${isPrinc?'background:var(--rojo);':''}">⭐</button>
       </div>`;
     }).join('')+'</div>';
   }
@@ -2263,7 +2261,7 @@ async function exportPDFTienda(){
         let fx2=fX+1;
         for(const fsrc of rec.foto2){
           try{
-            const j=await toJ(fsrc,IH-2);
+            const j=await toJ(fsrc,1200);
             if(j){const di=await getDim(j);const iW=Math.min(Math.round((IH-2)*(di.w/di.h)),cW[cW.length-1]-2);
               if(fx2+iW<=fX+cW[cW.length-1]){doc.addImage(j,'JPEG',fx2,y+1,iW,IH-2);fx2+=iW+1;}}
           }catch(e){}
@@ -2373,7 +2371,7 @@ function renderREQ(){
       const rid=String(rec.id);
       const tot=(parseFloat(ean.cantidad)||0)*(parseFloat(ean.pvp)||0);
       const rIdR=String(rec.id);
-      const f2html=rec.foto2?.length>0?('<div class="foto-strip">'+rec.foto2.map((src,fi)=>`<div class="foto-thumb${fi===0?' principal':''}"><img src="${src}" style="height:${fi===0?70:55}px;cursor:pointer;" onclick="openGalLB(${fi},'rec-${rIdR}')"><button class="star-btn" onclick="setRecPrincipal('req','${rIdR}',${fi})" style="${fi===0?'background:var(--rojo);':''}">⭐</button></div>`).join('')+'</div>'):'';
+      const f2html=rec.foto2?.length>0?('<div class="foto-strip">'+rec.foto2.map((src,fi)=>`<div class="foto-thumb${fi===0?' principal':''}"><img src="${src}" style="height:${fi===0?70:55}px;cursor:pointer;" onclick="openGalLB(${fi},'rec-${rIdR}')"></div>`).join('')+'</div>'):'';
       const delEan=rec.eans.length>1?`<button class="btn bd sm" onclick="delEAN('req','${rid}',${ei})"><span class="ic">🗑️</span></button>`:'';
       tb.insertAdjacentHTML('beforeend',`<tr data-rid="${rid}" data-ei="${ei}">
         <td><span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:2px 6px;font-size:.67rem;font-weight:700;">${esc(rec.reqArea||'—')}</span></td>
@@ -2704,7 +2702,7 @@ function renderConsT(data){
     (rec.eans||[{ean:'',cantidad:'',pvp:''}]).forEach(ean=>{
       rn++;
       const rIdC=String(rec.id);
-      const f2=rec.foto2?.length>0?('<div class="foto-strip">'+rec.foto2.map((src,fi)=>`<div class="foto-thumb${fi===0?' principal':''}" style="cursor:pointer;" onclick="openGalLB(${fi},'rec-${rIdC}')"><img src="${src}" style="height:${fi===0?70:55}px;" title="${fi===0?'⭐ Principal':'Ver galería'}">${fi===0?'<button class="star-btn" style="pointer-events:none;background:var(--rojo);">⭐</button>':''}</div>`).join('')+'</div>'):'';
+      const f2=rec.foto2?.length>0?('<div class="foto-strip">'+rec.foto2.map((src,fi)=>`<div class="foto-thumb${fi===0?' principal':''}" style="cursor:pointer;" onclick="openGalLB(${fi},'rec-${rIdC}')"><img src="${src}" style="height:${fi===0?70:55}px;" title="${fi===0?'Foto principal':'Ver galería'}"></div>`).join('')+'</div>'):'';
       html+=`<tr data-crid="${esc(rec.id)}">
         ${ro?'':`<td style="text-align:center;"><input type="checkbox" class="cons-chk" data-crid="${esc(rec.id)}" onchange="updConsSelCount()"></td>`}
         <td>${rn}</td><td>${esc(rec.semana)}</td><td><span style="background:#fff0f0;color:var(--rojo);border:1px solid #ffcccc;border-radius:4px;padding:2px 6px;font-size:.67rem;font-weight:700;">${esc(rec.tienda)}</span></td>
@@ -2842,7 +2840,7 @@ async function exportPDF(mode){
           let fx=fotoX+1;
           for(const fsrc of rec.foto2){
             try{
-              const j=await toJ(fsrc,IH-2);
+              const j=await toJ(fsrc,1200);
               if(j){
                 const di=await getDim(j);
                 const iW=Math.min(Math.round((IH-2)*(di.w/di.h)),fotoColW-2);
@@ -2899,7 +2897,7 @@ async function exportPDF(mode){
           const fX3=ML+cW.slice(0,-1).reduce((a,b)=>a+b,0);
           let fx3=fX3+1;
           for(const fsrc of rec.foto2){
-            try{const j=await toJ(fsrc,IH-2);
+            try{const j=await toJ(fsrc,1200);
               if(j){const di=await getDim(j);const iW=Math.min(Math.round((IH-2)*(di.w/di.h)),cW[cW.length-1]-2);
                 if(fx3+iW<=fX3+cW[cW.length-1]){doc.addImage(j,'JPEG',fx3,y+1,iW,IH-2);fx3+=iW+1;}}
             }catch(e){}
@@ -2912,7 +2910,14 @@ async function exportPDF(mode){
   doc.save(`Deprati_${mode}_${new Date().toLocaleDateString('es-EC').replace(/\//g,'-')}.pdf`);
   showT('📄 PDF exportado');
 }
-function toJ(d,h){return new Promise(r=>{const i=new Image();i.onload=()=>{const hh=h||100;const cv=document.createElement('canvas');cv.width=Math.round(hh*(i.width/i.height));cv.height=hh;cv.getContext('2d').drawImage(i,0,0,cv.width,cv.height);r(cv.toDataURL('image/jpeg',.85));};i.onerror=()=>r(null);i.src=d;});}
+function toJ(d,maxPx){return new Promise(r=>{const i=new Image();i.onload=()=>{
+  // Keep full resolution up to maxPx on longest side to avoid blurriness
+  const mp=maxPx||1200;
+  const scale=Math.min(1,mp/Math.max(i.width,i.height));
+  const cv=document.createElement('canvas');
+  cv.width=Math.round(i.width*scale);cv.height=Math.round(i.height*scale);
+  cv.getContext('2d').drawImage(i,0,0,cv.width,cv.height);
+  r(cv.toDataURL('image/jpeg',.92));};i.onerror=()=>r(null);i.src=d;});}
 function getDim(d){return new Promise(r=>{const i=new Image();i.onload=()=>r({w:i.width,h:i.height});i.onerror=()=>r({w:1,h:1});i.src=d;});}
 
 // ─────────────────────────────────────────────
